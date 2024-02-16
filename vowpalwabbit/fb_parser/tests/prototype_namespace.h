@@ -46,6 +46,26 @@ struct feature_t
   {
   }
 
+  // move assignment
+  feature_t& operator=(feature_t&& other)
+  {
+    has_name = other.has_name;
+    name = std::move(other.name);
+    value = other.value;
+    hash = other.hash;
+    return *this;
+  }
+
+  // copy assignment
+  feature_t& operator=(const feature_t& other)
+  {
+    has_name = other.has_name;
+    name = other.name;
+    value = other.value;
+    hash = other.hash;
+    return *this;
+  }
+
   bool has_name;
   std::string name;
   float value;
@@ -80,6 +100,28 @@ struct prototype_namespace_t
       , hash(other.hash)
       , feature_group(other.feature_group)
   {
+  }
+
+  // move assignment
+  prototype_namespace_t& operator=(prototype_namespace_t&& other)
+  {
+    has_name = other.has_name;
+    name = std::move(other.name);
+    features = std::move(other.features);
+    hash = other.hash;
+    feature_group = other.feature_group;
+    return *this;
+  }
+
+  // copy assignment
+  prototype_namespace_t& operator=(const prototype_namespace_t& other)
+  {
+    has_name = other.has_name;
+    name = other.name;
+    features = other.features;
+    hash = other.hash;
+    feature_group = other.feature_group;
+    return *this;
   }
 
   bool has_name;
