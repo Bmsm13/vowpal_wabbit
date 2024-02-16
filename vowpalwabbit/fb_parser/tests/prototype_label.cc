@@ -408,7 +408,7 @@ prototype_label_t continuous_label(std::vector<VW::cb_continuous::continuous_lab
   VW::polylabel actual_label;
   actual_label.cb_cont.reset_to_default();
 
-  actual_label.cb_cont..costs.reserve(costs.size());
+  actual_label.cb_cont.costs.reserve(costs.size());
   for (size_t i = 0; i < costs.size(); i++) { actual_label.cb_cont.costs.push_back(costs[i]); }
 
   return prototype_label_t{fb::Label_ContinuousLabel, actual_label, {}};
