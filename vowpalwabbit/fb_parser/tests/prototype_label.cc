@@ -374,7 +374,8 @@ prototype_label_t simple_label(float label, float weight, float initial)
 prototype_label_t cb_label(std::vector<VW::cb_class> costs, float weight)
 {
   VW::polylabel actual_label;
-  actual_label.cb = {std::move(costs), weight};
+  VW::cb_label label { std::move(costs), weight};
+  actual_label.cb = std::move(label);
 
   return prototype_label_t{fb::Label_CBLabel, actual_label, {}};
 }
@@ -382,7 +383,8 @@ prototype_label_t cb_label(std::vector<VW::cb_class> costs, float weight)
 prototype_label_t cb_label(VW::cb_class single_class, float weight)
 {
   VW::polylabel actual_label;
-  actual_label.cb = {{single_class}, weight};
+  VW::cb_label label { std::move(std::vector<VW::cb_class>{single_class}), weight}
+  actual_label.cb = std::move(label);
 
   return prototype_label_t{fb::Label_CBLabel, actual_label, {}};
 }
@@ -406,7 +408,9 @@ prototype_label_t continuous_label(std::vector<VW::cb_continuous::continuous_lab
   costs_v.reserve(costs.size());
   for (size_t i = 0; i < costs.size(); i++) { costs_v.push_back(costs[i]); }
 
-  actual_label.cb_cont = {costs_v};
+  VW::cb_continuous::continuous_label label{costs_v};
+
+  actual_label.cb_cont = std::move(label);
 
   return prototype_label_t{fb::Label_ContinuousLabel, actual_label, {}};
 }
@@ -425,7 +429,7 @@ prototype_label_t slates_label_raw(VW::slates::example_type type, float weight, 
   for (const auto& action_score : probabilities) { slates_label.probabilities.push_back(action_score); }
 
   VW::polylabel actual_label;
-  actual_label.slates = slates_label;
+  actual_label.slates = std::move(slates_label);
 
   return prototype_label_t{fb::Label_Slates_Label, actual_label, {}};
 }
