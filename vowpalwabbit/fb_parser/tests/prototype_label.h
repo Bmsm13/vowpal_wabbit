@@ -28,6 +28,10 @@ struct prototype_label_t
   VW::reduction_features reduction_features;
 
   prototype_label_t() : label_type(fb::Label_NONE), label(), reduction_features() {}
+  prototype_label_t(fb::Label label_type, VW::polylabel label, VW::reduction_features reduction_features)
+      : label_type(label_type), label(label), reduction_features(reduction_features)
+  {
+  }
   prototype_label_t(const prototype_label_t& other)
       : label_type(other.label_type), reduction_features(other.reduction_features)
   {
