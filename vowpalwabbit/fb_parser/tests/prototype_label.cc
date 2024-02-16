@@ -374,19 +374,21 @@ prototype_label_t simple_label(float label, float weight, float initial)
 prototype_label_t cb_label(std::vector<VW::cb_class> costs, float weight)
 {
   VW::polylabel actual_label;
-  VW::cb_label label { std::move(costs), weight};
-  actual_label.cb = std::move(label);
+  actual_label.cb.reset_to_default();
+  actual_label.cb.costs = std::move(costs);
+  actual_label.cb.weight = weight;
 
   return prototype_label_t{fb::Label_CBLabel, actual_label, {}};
 }
 
 prototype_label_t cb_label(VW::cb_class single_class, float weight)
 {
-  VW::polylabel actual_label;
-  VW::cb_label label { std::move(std::vector<VW::cb_class>{single_class}), weight}
-  actual_label.cb = std::move(label);
+  // VW::polylabel actual_label;
+  // VW::cb_label label { std::move(std::vector<VW::cb_class>{single_class}), weight}
+  // actual_label.cb = std::move(label);
 
-  return prototype_label_t{fb::Label_CBLabel, actual_label, {}};
+  // return prototype_label_t{fb::Label_CBLabel, actual_label, {}};
+  return cb_label(std::vector<VW::cb_class>{single_class}, weight);
 }
 
 prototype_label_t cb_label_shared()
@@ -404,13 +406,10 @@ prototype_label_t cb_label_shared()
 prototype_label_t continuous_label(std::vector<VW::cb_continuous::continuous_label_elm> costs)
 {
   VW::polylabel actual_label;
-  v_array<VW::cb_continuous::continuous_label_elm> costs_v;
-  costs_v.reserve(costs.size());
-  for (size_t i = 0; i < costs.size(); i++) { costs_v.push_back(costs[i]); }
+  actual_label.cb_cont.reset_to_default();
 
-  VW::cb_continuous::continuous_label label{costs_v};
-
-  actual_label.cb_cont = std::move(label);
+  actual_label.cb_cont..costs.reserve(costs.size());
+  for (size_t i = 0; i < costs.size(); i++) { actual_label.cb_cont.costs.push_back(costs[i]); }
 
   return prototype_label_t{fb::Label_ContinuousLabel, actual_label, {}};
 }
