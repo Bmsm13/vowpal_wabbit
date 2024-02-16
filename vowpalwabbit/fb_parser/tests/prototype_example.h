@@ -26,6 +26,13 @@ struct prototype_example_t
   prototype_label_t label = no_label();
   const char* tag = nullptr;
 
+  prototype_example_t() = default;
+  prototype_example_t(const prototype_example_t& other) : namespaces(other.namespaces), label(other.label), tag(other.tag) {}
+  prototype_example_t(prototype_example_t&& other) : namespaces(std::move(other.namespaces)), label(std::move(other.label)), tag(other.tag)
+  {
+    other.tag = nullptr;
+  }
+
   inline size_t count_indices() const
   {
     size_t count = 0;

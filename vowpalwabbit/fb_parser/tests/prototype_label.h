@@ -27,6 +27,103 @@ struct prototype_label_t
   VW::polylabel label;
   VW::reduction_features reduction_features;
 
+  prototype_label_t() : label_type(fb::Label_NONE), label(), reduction_features() {}
+  prototype_label_t(const prototype_label_t& other)
+      : label_type(other.label_type), reduction_features(other.reduction_features)
+  {
+    switch (other.label_type)
+    {
+      case fb::Label_CB_EVAL_Label:
+        label.cb_eval = other.label.cb_eval;
+        break;
+      case fb::Label_CBLabel:
+        label.cb = other.label.cb;
+        break;
+      case fb::Label_CCBLabel:
+        label.conditional_contextual_bandit = other.label.conditional_contextual_bandit;
+        break;
+      case fb::Label_MultiClass:
+        label.multi = other.label.multi;
+        break;
+      case fb::Label_MultiLabel:
+        label.multilabels = other.label.multilabels;
+        break;
+      case fb::Label_SimpleLabel:
+        label.simple = other.label.simple;
+        break;
+      case fb::Label_ContinuousLabel:
+        label.cb_cont = other.label.cb_cont;
+        break;
+      case fb::Label_Slates_Label:
+        label.slates = other.label.slates;
+        break;
+      case fb::Label_no_label:
+      case fb::Label_NONE:
+        label.empty = {};
+        break;
+    }
+  }
+
+  prototype_label_t(prototype_label_t&& other)
+      : label_type(other.label_type), label(), reduction_features(std::move(other.reduction_features))
+  {
+    other.label_type = fb::Label_no_label;
+
+    label.empty = {};
+    std::swap(label, other.label);
+  }
+
+  prototype_label_t& operator=(prototype_label_t&& other)
+  {
+    label_type = other.label_type;
+    reduction_features = std::move(other.reduction_features);
+    other.label_type = fb::Label_no_label;
+
+    label.empty = {};
+    std::swap(label, other.label);
+    return *this;
+  }
+
+  prototype_label_t& operator=(const prototype_label_t& other)
+  {
+    label_type = other.label_type;
+    reduction_features = other.reduction_features;
+
+    switch (other.label_type)
+    {
+      case fb::Label_CB_EVAL_Label:
+        label.cb_eval = other.label.cb_eval;
+        break;
+      case fb::Label_CBLabel:
+        label.cb = other.label.cb;
+        break;
+      case fb::Label_CCBLabel:
+        label.conditional_contextual_bandit = other.label.conditional_contextual_bandit;
+        break;
+      case fb::Label_MultiClass:
+        label.multi = other.label.multi;
+        break;
+      case fb::Label_MultiLabel:
+        label.multilabels = other.label.multilabels;
+        break;
+      case fb::Label_SimpleLabel:
+        label.simple = other.label.simple;
+        break;
+      case fb::Label_ContinuousLabel:
+        label.cb_cont = other.label.cb_cont;
+        break;
+      case fb::Label_Slates_Label:
+        label.slates = other.label.slates;
+        break;
+      case fb::Label_no_label:
+      case fb::Label_NONE:
+        label.empty = {};
+        break;
+    }
+
+    return *this;
+  }
+
   Offset<void> create_flatbuffer(flatbuffers::FlatBufferBuilder& builder, VW::workspace& w) const;
 
 #ifndef VWFB_BUILDERS_ONLY
