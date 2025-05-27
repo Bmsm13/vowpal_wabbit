@@ -1,0 +1,67 @@
+name: Build e Teste VW Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 🔽 Checkout repositório com submódulos
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: 🧰 Instalar CMake manualmente
+        run: |
+          curl -L -o cmake.zip https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-windows-x86_64.zip
+          7z x cmake.zip -ocmake-dir > nul
+          echo "$pwd\\cmake-dir\\cmake-3.29.3-windows-x86_64\\bin" | Out-File -Append -Encoding ASCII $Env:GITHUB_PATH
+
+      - name: ⚡ Instalar Ninja (opcional)
+        run: |
+          curl -L -o ninja.zip https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-win.zip
+          7z x ninja.zip -oninja-dir > nul
+          echo "$pwd\\ninja-dir" | Out-File -Append -Encoding ASCII $Env:GITHUB_PATH
+
+      - name: 📦 Clonar e preparar vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.bat
+
+      - name: 🚨 Instalar dependências via vcpkg
+        run: |
+          ./vcpkg/vcpkg install `
+            zlib `
+            fmt `
+            spdlog `
+            rapidjson `
+            string-view-lite `
+            eigen3 `
+            boost-math `
+            gtest `
+            --triplet x64-windows
+
+      - name: 🧱 Build com CMake + vcpkg
+        run: |
+          mkdir build
+          cd build
+          cmake .. `
+            -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DVW_BUILD_VW_C_WRAPPER=OFF `
+            -DVW_BUILD_VW_C_LIB=OFF `
+            -DVW_BUILD_TESTS=ON `
+            -A x64
+          cmake --build . --config Release
+
+      - name: 🧪 Rodar testes do VW
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      - name: 📤 Upload do executável
+        uses: actions/upload-artifact@v4
+        with:
+          name: vowpalwabbit-exe
+          path: build\Release\vw.exe
