@@ -30,18 +30,8 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
 
-      - name: 🚨 Instalar dependências via vcpkg
-        run: |
-          ./vcpkg/vcpkg install `
-            zlib `
-            fmt `
-            spdlog `
-            rapidjson `
-            string-view-lite `
-            eigen3 `
-            boost-math `
-            gtest `
-            --triplet x64-windows
+      - name: 🚨 Instalar dependências via vcpkg (modo manifest)
+        run: ./vcpkg/vcpkg install --triplet x64-windows
 
       - name: 🧱 Build com CMake + vcpkg
         run: |
