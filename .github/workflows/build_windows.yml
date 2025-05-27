@@ -30,6 +30,9 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
 
+      - name: 📌 Definir VCPKG_ROOT
+        run: echo "VCPKG_ROOT=${{ github.workspace }}/vcpkg" | Out-File -Append -Encoding ASCII $Env:GITHUB_ENV
+
       - name: 🚨 Instalar dependências via vcpkg (modo manifest)
         run: ./vcpkg/vcpkg install --triplet x64-windows
 
@@ -38,10 +41,11 @@ jobs:
           mkdir build
           cd build
           cmake .. `
-            -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake `
             -DVW_BUILD_VW_C_WRAPPER=OFF `
             -DVW_BUILD_VW_C_LIB=OFF `
             -DVW_BUILD_TESTS=ON `
+            -DCMAKE_BUILD_TYPE=Release `
             -A x64
           cmake --build . --config Release
 
