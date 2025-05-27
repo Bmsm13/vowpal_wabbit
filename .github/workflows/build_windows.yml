@@ -54,8 +54,22 @@ jobs:
           cd build
           ctest --output-on-failure
 
-      - name: 📤 Upload do executável
+      - name: 🧾 Verificar arquivos gerados
+        run: dir build /s /b
+
+      - name: 📁 Criar pasta final e copiar binários
+        run: |
+          mkdir pacote_final
+          copy build\**\vw.exe pacote_final\ 2> NUL
+          copy build\**\*.dll pacote_final\ 2> NUL
+          copy build\**\*.pdb pacote_final\ 2> NUL
+
+      - name: 📦 Compactar pacote
+        run: powershell Compress-Archive -Path pacote_final\* -DestinationPath vw_completo.zip
+
+      - name: 📤 Upload do pacote completo
         uses: actions/upload-artifact@v4
         with:
-          name: vowpalwabbit-exe
-          path: build\Release\vw.exe
+          name: vw-bin-completo
+          path: vw_completo.zip
+          if-no-files-found: error
