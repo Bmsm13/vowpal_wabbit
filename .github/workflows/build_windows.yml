@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
 
     steps:
       - name: 🔽 Checkout repositório com submódulos
@@ -29,9 +31,6 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.bat
-
-      - name: 📌 Definir VCPKG_ROOT
-        run: echo "VCPKG_ROOT=${{ github.workspace }}/vcpkg" | Out-File -Append -Encoding ASCII $Env:GITHUB_ENV
 
       - name: 🚨 Instalar dependências via vcpkg (modo manifest)
         run: ./vcpkg/vcpkg install --triplet x64-windows
