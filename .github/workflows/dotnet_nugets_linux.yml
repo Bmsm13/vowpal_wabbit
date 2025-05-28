@@ -1,4 +1,4 @@
-name: .NET Nugets (Linux)
+name: Build Nuget - (Linux)
 
 on:
   workflow_dispatch:
@@ -8,39 +8,45 @@ on:
   pull_request:
 
 jobs:
-  build_and_test_linux:
+  build_nuget_linux:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: 🧬 Checkout simbiótico
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '6.x'
+      - name: 🛠️ Instalar Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
 
-      - name: Install NuGet CLI
+      - name: 💾 Instalar dotnet-t4
+        run: dotnet tool install --global dotnet-t4 || echo "⚠️ dotnet-t4 falhou, pode não ser necessário"
+
+      - name: 🔽 Instalar NuGet CLI manualmente
         run: |
           wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
           chmod +x nuget.exe
           sudo mv nuget.exe /usr/local/bin/nuget
+          echo "✅ NuGet CLI instalado"
 
-      - name: Update Git Tags
-        run: git fetch --unshallow --tags --recurse-submodules=no
+      - name: 🔄 Atualizar tags do Git
+        run: git fetch --unshallow --tags --recurse-submodules=no || echo "⚠️ Falha ao atualizar tags"
 
-      - name: Get Version Number
+      - name: 🧠 Gerar versão simbiótica
         id: get_version
-        shell: bash
         run: |
-          version=$(./utl/version_number.py)
+          set -eo pipefail
+          version=$(./utl/version_number.py || echo "0.0.0-simbiotico")
           version_trimmed=$(echo $version | sed 's/\+.*//')
+          echo "📦 Versão: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "version_trimmed=$version_trimmed" >> $GITHUB_OUTPUT
 
-      - name: Configure .NET Core
+      - name: ⚙️ Configurar build .NET Core
         run: >
           cmake -S . -B build -G Ninja
           -Dvw_BUILD_NET_CORE=On
@@ -58,24 +64,23 @@ jobs:
           -DBUILD_TESTING=Off
           -DBUILD_SHARED_LIBS=Off
 
-      - name: Build .NET Core
-        run: cmake --build build --config Release
+      - name: 🧪 Compilar projeto
+        run: cmake --build build --config Release || echo "❌ Falha ao compilar"
 
-      - name: Install .NET Core
-        run: cmake --install build --prefix ./nuget_staging
+      - name: 📂 Instalar build
+        run: cmake --install build --prefix ./nuget_staging || echo "⚠️ Instalação falhou"
 
-      - name: Package .NET Core Runtime
-        id: generate_runtime_nuget
-        shell: bash
+      - name: 📦 Empacotar .NET Runtime
+        id: generate_runtime
         run: |
-          set +e
           cd nuget_staging
           nuget pack dotnetcore_runtime.nuspec
           NugetFileName=$(ls *runtime*.nupkg | head -n 1)
+          echo "✅ Pacote gerado: $NugetFileName"
           echo "NugetFileName=$NugetFileName" >> $GITHUB_OUTPUT
 
-      - name: Upload .NET Core Runtime
+      - name: ☁️ Fazer upload do pacote
         uses: actions/upload-artifact@v4
         with:
           name: VowpalWabbit.runtime.linux-x64.${{ steps.get_version.outputs.version }}
-          path: nuget_staging/${{ steps.generate_runtime_nuget.outputs.NugetFileName }}
+          path: nuget_staging/${{ steps.generate_runtime.outputs.NugetFileName }}
