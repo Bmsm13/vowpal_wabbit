@@ -1,4 +1,4 @@
-name: Build Nuget - (Windows)
+name: Build Nuget - (windowns-latest, win-x64)
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
 jobs:
   build_nuget_windows:
     runs-on: windows-latest
+
     steps:
       - name: 🧬 Clonando repositório simbiótico
         uses: actions/checkout@v4
@@ -50,31 +51,27 @@ jobs:
             -DVW_BOOST_MATH_SYS_DEP=Off `
             -DVW_BUILD_VW_C_WRAPPER=Off `
             -DBUILD_TESTING=Off `
-            -DBUILD_SHARED_LIBS=Off || echo "❌ Falha na configuração do build"
+            -DBUILD_SHARED_LIBS=Off
 
       - name: 🧪 Compilando .NET Core
-        run: cmake --build build --config Release || echo "❌ Falha ao compilar"
+        run: cmake --build build --config Release
 
       - name: 📦 Instalando build simbiótico
-        run: cmake --install build --prefix ./nuget_staging || echo "⚠️ Instalação falhou, verifique permissões"
+        run: cmake --install build --prefix ./nuget_staging
 
       - name: 🧾 Empacotando Nuget
-        id: generate-nuget
+        id: generate_nuget
         shell: powershell
         run: |
-          try {
-            cd nuget_staging
-            nuget pack dotnet.nuspec
-            $NugetFileName = Get-ChildItem *.nupkg -name
-            echo "NugetFileName=$NugetFileName" >> $env:GITHUB_OUTPUT
-            Write-Host "Pacote gerado com sucesso: $NugetFileName"
-          } catch {
-            Write-Host "ERRO: Falha ao empacotar Nuget"
-            exit 1
-          }
+          Copy-Item dotnetcore_runtime.nuspec nuget_staging/
+          cd nuget_staging
+          nuget pack dotnetcore_runtime.nuspec
+          $NugetFileName = Get-ChildItem *runtime*.nupkg -Name
+          echo "NugetFileName=$NugetFileName" >> $env:GITHUB_OUTPUT
+          Write-Host "✅ Pacote gerado: $NugetFileName"
 
       - name: ☁️ Enviando artefato para o GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: VowpalWabbit.${{ steps.get_version.outputs.version }}.nupkg
-          path: nuget_staging/${{ steps.generate-nuget.outputs.NugetFileName }}
+          name: VowpalWabbit.runtime.win-x64.${{ steps.get_version.outputs.version }}
+          path: nuget_staging/${{ steps.generate_nuget.outputs.NugetFileName }}
