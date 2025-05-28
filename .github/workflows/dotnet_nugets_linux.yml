@@ -1,0 +1,81 @@
+name: .NET Nugets (Linux)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build_and_test_linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.x'
+
+      - name: Install NuGet CLI
+        run: |
+          wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+          chmod +x nuget.exe
+          sudo mv nuget.exe /usr/local/bin/nuget
+
+      - name: Update Git Tags
+        run: git fetch --unshallow --tags --recurse-submodules=no
+
+      - name: Get Version Number
+        id: get_version
+        shell: bash
+        run: |
+          version=$(./utl/version_number.py)
+          version_trimmed=$(echo $version | sed 's/\+.*//')
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version_trimmed=$version_trimmed" >> $GITHUB_OUTPUT
+
+      - name: Configure .NET Core
+        run: >
+          cmake -S . -B build -G Ninja
+          -Dvw_BUILD_NET_CORE=On
+          -Dvw_DOTNET_USE_MSPROJECT=Off
+          -DVW_NUGET_PACKAGE_NAME=VowpalWabbit
+          -DVW_NUGET_PACKAGE_VERSION="${{ steps.get_version.outputs.version }}"
+          -DVW_NUGET_PACKAGE_VERSION_TRIMMED="${{ steps.get_version.outputs.version_trimmed }}"
+          -DVW_FEAT_FLATBUFFERS=Off
+          -DRAPIDJSON_SYS_DEP=Off
+          -DFMT_SYS_DEP=Off
+          -DSPDLOG_SYS_DEP=Off
+          -DVW_ZLIB_SYS_DEP=Off
+          -DVW_BOOST_MATH_SYS_DEP=Off
+          -DVW_BUILD_VW_C_WRAPPER=Off
+          -DBUILD_TESTING=Off
+          -DBUILD_SHARED_LIBS=Off
+
+      - name: Build .NET Core
+        run: cmake --build build --config Release
+
+      - name: Install .NET Core
+        run: cmake --install build --prefix ./nuget_staging
+
+      - name: Package .NET Core Runtime
+        id: generate_runtime_nuget
+        shell: bash
+        run: |
+          set +e
+          cd nuget_staging
+          nuget pack dotnetcore_runtime.nuspec
+          NugetFileName=$(ls *runtime*.nupkg | head -n 1)
+          echo "NugetFileName=$NugetFileName" >> $GITHUB_OUTPUT
+
+      - name: Upload .NET Core Runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: VowpalWabbit.runtime.linux-x64.${{ steps.get_version.outputs.version }}
+          path: nuget_staging/${{ steps.generate_runtime_nuget.outputs.NugetFileName }}
