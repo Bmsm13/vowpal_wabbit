@@ -8,7 +8,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 🧬 Clonando repositório simbiótico
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -74,7 +74,7 @@ jobs:
           }
 
       - name: ☁️ Enviando artefato para o GitHub
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: VowpalWabbit.${{ steps.get_version.outputs.version }}.nupkg
           path: nuget_staging/${{ steps.generate-nuget.outputs.NugetFileName }}
