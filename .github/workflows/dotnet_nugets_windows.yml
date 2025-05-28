@@ -1,4 +1,4 @@
-name: Build Nuget - Simbiótico Windows
+name: Build Nuget - (Windows)
 
 on:
   workflow_dispatch:
