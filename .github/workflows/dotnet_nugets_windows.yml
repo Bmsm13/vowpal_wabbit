@@ -67,9 +67,9 @@ jobs:
             nuget pack dotnet.nuspec
             $NugetFileName = Get-ChildItem *.nupkg -name
             echo "NugetFileName=$NugetFileName" >> $env:GITHUB_OUTPUT
-            echo "📦 Pacote gerado com sucesso: $NugetFileName"
+            Write-Host "Pacote gerado com sucesso: $NugetFileName"
           } catch {
-            Write-Host "❌ Erro ao empacotar Nuget"
+            Write-Host "ERRO: Falha ao empacotar Nuget"
             exit 1
           }
 
