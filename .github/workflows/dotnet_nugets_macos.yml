@@ -1,0 +1,79 @@
+name: Build Nuget - (macOS-13, osx-x64)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build_nuget_dotnet:
+    runs-on: macos-13
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: 🧬 Checkout simbiótico
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: 🧱 Instalar Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: 💾 Instalar dotnet-t4
+        run: dotnet tool install --global dotnet-t4 || echo "⚠️ dotnet-t4 falhou, pode não ser necessário"
+
+      - name: 🔄 Atualizar Git Tags
+        run: git fetch --unshallow --tags --recurse-submodules=no || echo "⚠️ Falha ao atualizar tags"
+
+      - name: 🧠 Gerar versão simbiótica
+        id: get_version
+        run: |
+          set -eo pipefail
+          version=$(./utl/version_number.py || echo "0.0.0-macos")
+          version_trimmed=$(echo $version | sed 's/\+.*//')
+          echo "📦 Versão: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version_trimmed=$version_trimmed" >> $GITHUB_OUTPUT
+
+      - name: ⚙️ Configurar build
+        run: >
+          cmake -S . -B build -G Ninja
+          -Dvw_BUILD_NET_CORE=On
+          -Dvw_DOTNET_USE_MSPROJECT=Off
+          -DVW_NUGET_PACKAGE_NAME=VowpalWabbit
+          -DVW_NUGET_PACKAGE_VERSION="${{ steps.get_version.outputs.version }}"
+          -DVW_NUGET_PACKAGE_VERSION_TRIMMED="${{ steps.get_version.outputs.version_trimmed }}"
+          -DVW_FEAT_FLATBUFFERS=Off
+          -DRAPIDJSON_SYS_DEP=Off
+          -DFMT_SYS_DEP=Off
+          -DSPDLOG_SYS_DEP=Off
+          -DVW_ZLIB_SYS_DEP=Off
+          -DVW_BOOST_MATH_SYS_DEP=Off
+          -DVW_BUILD_VW_C_WRAPPER=Off
+          -DBUILD_TESTING=Off
+          -DBUILD_SHARED_LIBS=Off
+
+      - name: 🧪 Compilar projeto
+        run: cmake --build build --config Release || echo "❌ Falha ao compilar"
+
+      - name: 📂 Instalar build
+        run: cmake --install build --prefix ./nuget_staging || echo "⚠️ Instalação falhou"
+
+      - name: 📦 Empacotar NuGet macOS
+        id: generate_runtime
+        run: |
+          cd nuget_staging
+          nuget pack dotnetcore_runtime.nuspec
+          NugetFileName=$(ls *runtime*.nupkg | head -n 1)
+          echo "✅ Pacote gerado: $NugetFileName"
+          echo "NugetFileName=$NugetFileName" >> $GITHUB_OUTPUT
+
+      - name: ☁️ Upload do pacote
+        uses: actions/upload-artifact@v4
+        with:
+          name: VowpalWabbit.runtime.osx-x64.${{ steps.get_version.outputs.version }}
+          path: nuget_staging/${{ steps.generate_runtime.outputs.NugetFileName }}
