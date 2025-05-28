@@ -26,13 +26,6 @@ jobs:
       - name: 💾 Instalar dotnet-t4
         run: dotnet tool install --global dotnet-t4 || echo "⚠️ dotnet-t4 falhou, pode não ser necessário"
 
-      - name: 🔽 Instalar NuGet CLI manualmente
-        run: |
-          wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-          chmod +x nuget.exe
-          sudo mv nuget.exe /usr/local/bin/nuget
-          echo "✅ NuGet CLI instalado"
-
       - name: 🔄 Atualizar tags do Git
         run: git fetch --unshallow --tags --recurse-submodules=no || echo "⚠️ Falha ao atualizar tags"
 
@@ -74,7 +67,7 @@ jobs:
         id: generate_runtime
         run: |
           cd nuget_staging
-          nuget pack dotnetcore_runtime.nuspec
+          dotnet nuget pack dotnetcore_runtime.nuspec
           NugetFileName=$(ls *runtime*.nupkg | head -n 1)
           echo "✅ Pacote gerado: $NugetFileName"
           echo "NugetFileName=$NugetFileName" >> $GITHUB_OUTPUT
