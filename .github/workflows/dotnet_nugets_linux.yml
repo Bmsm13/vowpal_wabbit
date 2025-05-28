@@ -1,4 +1,4 @@
-name: Build Nuget - Linux ubuntu-latest, x64
+name: Build Nuget - (Linux ubuntu-latest, x64)
 
 on:
   workflow_dispatch:
