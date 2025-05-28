@@ -59,19 +59,27 @@ jobs:
       - name: 📦 Instalando build simbiótico
         run: cmake --install build --prefix ./nuget_staging
 
-      - name: 🧾 Empacotando Nuget
-        id: generate_nuget
-        shell: powershell
+      - name: 📦 Empacotar NuGet Runtime
         run: |
-          Copy-Item dotnetcore_runtime.nuspec nuget_staging/
           cd nuget_staging
           nuget pack dotnetcore_runtime.nuspec
-          $NugetFileName = Get-ChildItem *runtime*.nupkg -Name
-          echo "NugetFileName=$NugetFileName" >> $env:GITHUB_OUTPUT
-          Write-Host "✅ Pacote gerado: $NugetFileName"
+          cd ..
 
-      - name: ☁️ Enviando artefato para o GitHub
+      - name: 📦 Empacotar NuGet CLI
+        run: |
+          cd nuget_staging
+          nuget pack dotnet_cli.nuspec
+          cd ..
+
+      - name: 📦 Empacotar NuGet Core
+        run: |
+          cd nuget_staging
+          nuget pack dotnet_core.nuspec
+          cd ..
+
+      - name: ☁️ Upload de todos pacotes
         uses: actions/upload-artifact@v4
         with:
-          name: VowpalWabbit.runtime.win-x64.${{ steps.get_version.outputs.version }}
-          path: nuget_staging/${{ steps.generate_nuget.outputs.NugetFileName }}
+          name: VowpalWabbit.nugets.win-x64.${{ steps.get_version.outputs.version }}
+          path: |
+            nuget_staging/*.nupkg
