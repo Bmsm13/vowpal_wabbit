@@ -26,7 +26,7 @@ jobs:
       - name: 💾 Instalar dotnet-t4
         run: dotnet tool install --global dotnet-t4 || echo "⚠️ dotnet-t4 falhou, pode não ser necessário"
 
-      - name: 🧰 Instalar Mono para rodar NuGet.exe
+      - name: 🧰 Instalar Mono para rodar NuGet CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y mono-complete
@@ -37,10 +37,8 @@ jobs:
       - name: 🧠 Gerar versão simbiótica
         id: get_version
         run: |
-          set -eo pipefail
           version=$(./utl/version_number.py || echo "0.0.0-simbiotico")
           version_trimmed=$(echo $version | sed 's/\+.*//')
-          echo "📦 Versão: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "version_trimmed=$version_trimmed" >> $GITHUB_OUTPUT
 
@@ -68,10 +66,10 @@ jobs:
       - name: 📂 Instalar build
         run: cmake --install build --prefix ./nuget_staging
 
-      - name: 📦 Baixar e empacotar com NuGet CLI via Mono
+      - name: 📦 Baixar e empacotar NuGet com Mono
         id: generate_runtime
         run: |
-          wget https://api.nuget.org/downloads/nuget.exe
+          wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
           mkdir -p nuget_staging
           cp dotnetcore_runtime.nuspec nuget_staging/
           cd nuget_staging
